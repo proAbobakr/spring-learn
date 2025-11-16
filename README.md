@@ -17,6 +17,7 @@ This project is a complete learning resource that covers:
 - ✅ **Docker & Docker Compose** deployment
 - ✅ **PostgreSQL** database
 - ✅ **Geolocation** queries (maps integration)
+- ✅ **Android Docs Crawler** (web scraping & LLM integration)
 
 ## 🚀 Quick Start
 
@@ -122,6 +123,59 @@ java -jar target/location-service-0.0.1-SNAPSHOT.jar
 - **Exception Handling**: Global exception handler with proper error responses
 - **Validation**: Bean Validation (JSR-303) for request DTOs
 - **Security**: JWT authentication, CORS configuration, password encryption
+
+## 🤖 Android Documentation Crawler (NEW!)
+
+A powerful web crawler system that fetches, processes, and organizes Android developer documentation in formats optimized for both human reading and LLM consumption.
+
+### Key Features
+- **Automated Crawling**: Crawls developer.android.com/reference with smart rate limiting
+- **Smart Categorization**: Organizes into 22+ categories (UI, Networking, Storage, etc.)
+- **Multi-Format Output**:
+  - 📄 **Markdown** with Mermaid diagrams for human reading
+  - 🤖 **JSONL** optimized for feeding into local LLMs
+  - 🔍 **Embeddings-ready** format for RAG systems
+- **Auto-Generated Content**: Creates Kotlin/Java examples, explanations, and best practices
+- **Visual Diagrams**: Generates class hierarchies and API relationships
+
+### Quick Start
+```bash
+# Start the application
+mvn spring-boot:run
+
+# Trigger crawl via REST API
+curl -X POST http://localhost:8080/api/crawler/start
+
+# Check status
+curl http://localhost:8080/api/crawler/status
+
+# View results
+ls android-docs-output/
+```
+
+### Output Formats
+
+**For Humans:**
+- `android-docs-output/markdown/` - Organized docs with charts and diagrams
+- Interactive category navigation
+- Syntax-highlighted code examples
+
+**For LLMs:**
+- `android-docs-output/llm-format/android-docs.jsonl` - Feed directly to LLM
+- `android-docs-output/llm-format/embeddings-ready.jsonl` - For vector databases
+- `android-docs-output/llm-format/by-category/*.json` - Categorized JSON files
+
+### Documentation
+- **Quick Start**: See [ANDROID_CRAWLER_QUICKSTART.md](ANDROID_CRAWLER_QUICKSTART.md)
+- **Full Guide**: See [ANDROID_DOCS_CRAWLER.md](ANDROID_DOCS_CRAWLER.md)
+- **API Reference**: Visit `/swagger-ui.html` → "Android Documentation Crawler"
+
+### Use Cases
+- Build RAG systems for Android development Q&A
+- Fine-tune LLMs on Android documentation
+- Create searchable knowledge bases
+- Generate training datasets
+- Offline documentation access
 
 ## 📁 Project Structure
 
