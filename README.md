@@ -177,6 +177,67 @@ ls android-docs-output/
 - Generate training datasets
 - Offline documentation access
 
+## 📰 ProAndroidDev Medium Crawler (NEW!)
+
+A specialized crawler that fetches and processes articles from ProAndroidDev Medium publication with automatic summarization and categorization.
+
+### Key Features
+- **Smart Article Extraction**: Crawls from multiple sources (archive, RSS, latest)
+- **Date Filtering**: Filter articles since specific date (default: August 2024)
+- **Auto-Summarization**: Generates summaries, TL;DR, and key takeaways
+- **Smart Categorization**: 12+ categories (Jetpack Compose, Kotlin, Architecture, etc.)
+- **Multi-Format Export**:
+  - 📄 **Markdown** with timeline and category organization
+  - 🤖 **JSONL** for LLM ingestion
+  - 🔍 **Embeddings-ready** for RAG systems
+
+### Quick Start
+```bash
+# Start crawl
+curl -X POST http://localhost:8080/api/medium-crawler/start
+
+# Check status
+curl http://localhost:8080/api/medium-crawler/status
+
+# View results
+ls medium-articles-output/
+```
+
+### Output Structure
+
+**For Humans:**
+- `markdown/README.md` - Index with statistics
+- `markdown/timeline.md` - Articles by month
+- `markdown/JETPACK_COMPOSE.md` - Category pages
+- `markdown/articles/*.md` - Individual articles with summaries
+
+**For LLMs:**
+- `llm-format/proandroiddev-articles.jsonl` - All articles in JSONL
+- `llm-format/embeddings-ready.jsonl` - Chunked for vector DBs
+- `llm-format/by-category/*.json` - Categorized JSON files
+
+### Features Per Article
+- ✅ Title, subtitle, full text
+- ✅ Author and publication date
+- ✅ Auto-generated summary
+- ✅ TL;DR with metadata
+- ✅ Key takeaways (bullet points)
+- ✅ Extracted topics and tags
+- ✅ Code snippets
+- ✅ Reading time, claps, responses
+
+### Documentation
+- **Full Guide**: See [MEDIUM_CRAWLER_GUIDE.md](MEDIUM_CRAWLER_GUIDE.md)
+- **API Reference**: Visit `/swagger-ui.html` → "Medium Crawler"
+
+### Use Cases
+- Track latest Android development trends
+- Build searchable article knowledge base
+- Create AI assistant for Android Q&A
+- Analyze trending topics
+- Generate newsletter content
+- Study evolution of Android practices
+
 ## 📁 Project Structure
 
 ```
