@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: doctor-platform
+  labels:
+    app: api-gateway
+    tier: gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+      - name: api-gateway
+        image: doctor-platform/api-gateway:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "kubernetes"
+        - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+          value: "http://service-discovery:8761/eureka/"
+        - name: SPRING_REDIS_HOST
+          value: "redis-master"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: doctor-platform
+spec:
+  type: LoadBalancer
+  selector:
+    app: api-gateway
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP

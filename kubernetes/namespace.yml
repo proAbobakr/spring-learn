@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: doctor-platform
+  labels:
+    name: doctor-platform
+    environment: production

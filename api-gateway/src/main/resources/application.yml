@@ -1,0 +1,134 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - AuthenticationFilter
+            - name: CircuitBreaker
+              args:
+                name: user-service
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+
+        - id: post-service
+          uri: lb://post-service
+          predicates:
+            - Path=/api/posts/**
+          filters:
+            - AuthenticationFilter
+            - name: CircuitBreaker
+              args:
+                name: post-service
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+
+        - id: media-service
+          uri: lb://media-service
+          predicates:
+            - Path=/api/media/**
+          filters:
+            - AuthenticationFilter
+            - name: CircuitBreaker
+              args:
+                name: media-service
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
+
+        - id: comment-service
+          uri: lb://comment-service
+          predicates:
+            - Path=/api/comments/**
+          filters:
+            - AuthenticationFilter
+            - name: CircuitBreaker
+              args:
+                name: comment-service
+                fallbackUri: forward:/fallback
+
+        - id: call-service
+          uri: lb://call-service
+          predicates:
+            - Path=/api/calls/**
+          filters:
+            - AuthenticationFilter
+            - name: CircuitBreaker
+              args:
+                name: call-service
+                fallbackUri: forward:/fallback
+
+        - id: ai-service
+          uri: lb://ai-service
+          predicates:
+            - Path=/api/ai/**
+          filters:
+            - AuthenticationFilter
+            - name: CircuitBreaker
+              args:
+                name: ai-service
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 2
+                redis-rate-limiter.burstCapacity: 5
+
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - AuthenticationFilter
+
+        - id: auth-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/auth/**
+
+  redis:
+    host: localhost
+    port: 6379
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+jwt:
+  secret: mySecretKeyThatIsAtLeast256BitsLongForHS256AlgorithmSecurityPurposes
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG

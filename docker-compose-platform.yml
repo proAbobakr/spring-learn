@@ -1,0 +1,266 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Databases - One per service for isolation
+  postgres-users:
+    image: postgres:15-alpine
+    container_name: doctor-postgres-users
+    environment:
+      POSTGRES_DB: doctor_users
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-users-data:/var/lib/postgresql/data
+    networks:
+      - doctor-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-posts:
+    image: postgres:15-alpine
+    container_name: doctor-postgres-posts
+    environment:
+      POSTGRES_DB: doctor_posts
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-posts-data:/var/lib/postgresql/data
+    networks:
+      - doctor-network
+
+  postgres-media:
+    image: postgres:15-alpine
+    container_name: doctor-postgres-media
+    environment:
+      POSTGRES_DB: doctor_media
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-media-data:/var/lib/postgresql/data
+    networks:
+      - doctor-network
+
+  postgres-comments:
+    image: postgres:15-alpine
+    container_name: doctor-postgres-comments
+    environment:
+      POSTGRES_DB: doctor_comments
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres-comments-data:/var/lib/postgresql/data
+    networks:
+      - doctor-network
+
+  # Redis Cluster for Caching and Rate Limiting
+  redis-master:
+    image: redis:7-alpine
+    container_name: doctor-redis-master
+    command: redis-server --appendonly yes --requirepass redispassword
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-master-data:/data
+    networks:
+      - doctor-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-replica-1:
+    image: redis:7-alpine
+    container_name: doctor-redis-replica-1
+    command: redis-server --appendonly yes --slaveof redis-master 6379 --requirepass redispassword --masterauth redispassword
+    ports:
+      - "6380:6379"
+    depends_on:
+      - redis-master
+    networks:
+      - doctor-network
+
+  # Kafka for Event-Driven Architecture
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: doctor-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-logs:/var/lib/zookeeper/log
+    networks:
+      - doctor-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: doctor-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    networks:
+      - doctor-network
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Service Discovery - Eureka Server
+  service-discovery:
+    build:
+      context: ./service-discovery
+      dockerfile: Dockerfile
+    container_name: doctor-service-discovery
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - doctor-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: doctor-api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+      SPRING_REDIS_HOST: redis-master
+      SPRING_REDIS_PASSWORD: redispassword
+    depends_on:
+      - service-discovery
+      - redis-master
+    networks:
+      - doctor-network
+
+  # User Service
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: doctor-user-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-users:5432/doctor_users
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_REDIS_HOST: redis-master
+      SPRING_REDIS_PASSWORD: redispassword
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+    depends_on:
+      - postgres-users
+      - redis-master
+      - kafka
+      - service-discovery
+    networks:
+      - doctor-network
+
+  # Post Service
+  post-service:
+    build:
+      context: ./post-service
+      dockerfile: Dockerfile
+    container_name: doctor-post-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-posts:5432/doctor_posts
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_REDIS_HOST: redis-master
+      SPRING_REDIS_PASSWORD: redispassword
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+    depends_on:
+      - postgres-posts
+      - redis-master
+      - kafka
+      - service-discovery
+    networks:
+      - doctor-network
+
+  # Prometheus for Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: doctor-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - doctor-network
+
+  # Grafana for Visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: doctor-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - doctor-network
+
+networks:
+  doctor-network:
+    driver: bridge
+
+volumes:
+  postgres-users-data:
+  postgres-posts-data:
+  postgres-media-data:
+  postgres-comments-data:
+  redis-master-data:
+  zookeeper-data:
+  zookeeper-logs:
+  kafka-data:
+  prometheus-data:
+  grafana-data:
