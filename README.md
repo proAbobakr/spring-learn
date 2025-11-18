@@ -1,33 +1,58 @@
-# Location Rating Service - Complete Spring Boot Guide for Android Developers
+# Location Rating Service - Complete Full-Stack Application
 
-A comprehensive, production-ready Spring Boot application demonstrating best practices for building RESTful APIs with microservices architecture, designed specifically for Kotlin/Android developers learning backend development.
+A comprehensive, production-ready full-stack application featuring a Spring Boot backend and React frontend, demonstrating best practices for building modern web applications with RESTful APIs, microservices architecture, and interactive user interfaces.
+
+**Backend:** Spring Boot + PostgreSQL + Redis + Kafka
+**Frontend:** React + Vite + React Router
 
 ## 📚 What You'll Learn
 
-This project is a complete learning resource that covers:
+This project is a complete full-stack learning resource that covers:
 
+### Backend (Spring Boot)
 - ✅ **Spring Boot & Spring Framework** fundamentals
 - ✅ **Dependency Injection** (similar to Dagger/Hilt)
-- ✅ **REST API** development (building what Retrofit consumes)
+- ✅ **REST API** development
 - ✅ **JWT Authentication** (token-based auth)
-- ✅ **JPA/Hibernate** (similar to Room)
+- ✅ **JPA/Hibernate** ORM
 - ✅ **Redis Caching** (distributed caching)
 - ✅ **Apache Kafka** (event streaming)
 - ✅ **Microservices Architecture** patterns
-- ✅ **Docker & Docker Compose** deployment
 - ✅ **PostgreSQL** database
 - ✅ **Geolocation** queries (maps integration)
+
+### Frontend (React)
+- ✅ **React 18** with modern hooks
+- ✅ **React Router 6** for SPA routing
+- ✅ **Vite** for fast development
+- ✅ **Context API** for state management
+- ✅ **Axios** for API integration
+- ✅ **JWT Authentication** flow
+- ✅ **Responsive Design** with CSS
+- ✅ **Image Upload** with drag & drop
+- ✅ **Real-time Updates** and notifications
+
+### DevOps
+- ✅ **Docker & Docker Compose** deployment
+- ✅ **CORS Configuration**
+- ✅ **Environment Management**
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
+**Backend:**
 - Java 17 or higher
 - Maven 3.6+
-- Docker & Docker Compose (for containerized deployment)
-- PostgreSQL 15 (for local development)
+- PostgreSQL 15
 - Redis (optional, for caching)
 - Kafka (optional, for event streaming)
+
+**Frontend:**
+- Node.js 16+ and npm/yarn
+
+**Deployment:**
+- Docker & Docker Compose (recommended)
 
 ### Option 1: Run with Docker (Recommended)
 
@@ -36,19 +61,28 @@ This project is a complete learning resource that covers:
 git clone <repository-url>
 cd spring-learn
 
-# Start all services with Docker Compose
+# Start backend services with Docker Compose
 docker-compose up -d
 
 # Check logs
 docker-compose logs -f app
 
+# Install frontend dependencies
+cd frontend
+npm install
+
+# Start frontend development server
+npm run dev
+
 # Access the application
-# API: http://localhost:8080
+# Frontend: http://localhost:3000
+# Backend API: http://localhost:8080
 # Swagger UI: http://localhost:8080/swagger-ui.html
 ```
 
 ### Option 2: Run Locally
 
+**Backend:**
 ```bash
 # 1. Start PostgreSQL
 sudo service postgresql start
@@ -64,13 +98,23 @@ sudo service redis-server start
 bin/zookeeper-server-start.sh config/zookeeper.properties &
 bin/kafka-server-start.sh config/server.properties &
 
-# 4. Run the application
+# 4. Run the Spring Boot application
 mvn clean install
 mvn spring-boot:run
+# API will be available at http://localhost:8080
+```
 
-# Or using JAR
-mvn clean package
-java -jar target/location-service-0.0.1-SNAPSHOT.jar
+**Frontend:**
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+# App will be available at http://localhost:3000
 ```
 
 ## 📖 Features
@@ -127,69 +171,48 @@ java -jar target/location-service-0.0.1-SNAPSHOT.jar
 
 ```
 spring-learn/
-├── src/
+├── src/                                         # Backend (Spring Boot)
 │   ├── main/
 │   │   ├── java/com/locationapp/service/
-│   │   │   ├── LocationServiceApplication.java  # Main application
-│   │   │   ├── config/                          # Configuration classes
-│   │   │   │   ├── SecurityConfig.java          # Spring Security + JWT
-│   │   │   │   ├── RedisConfig.java             # Redis caching
-│   │   │   │   ├── KafkaConfig.java             # Kafka messaging
-│   │   │   │   └── AppConfig.java               # General config
+│   │   │   ├── LocationServiceApplication.java
+│   │   │   ├── config/                          # Configuration
 │   │   │   ├── controller/                      # REST endpoints
-│   │   │   │   ├── AuthController.java
-│   │   │   │   ├── LocationController.java
-│   │   │   │   ├── RatingController.java
-│   │   │   │   ├── CommentController.java
-│   │   │   │   └── ImageController.java
 │   │   │   ├── service/                         # Business logic
-│   │   │   │   ├── AuthService.java
-│   │   │   │   ├── LocationService.java
-│   │   │   │   ├── RatingService.java
-│   │   │   │   ├── CommentService.java
-│   │   │   │   ├── ImageService.java
-│   │   │   │   └── EventPublisher.java
-│   │   │   ├── repository/                      # Data access (like Room DAOs)
-│   │   │   │   ├── UserRepository.java
-│   │   │   │   ├── LocationRepository.java
-│   │   │   │   ├── RatingRepository.java
-│   │   │   │   ├── CommentRepository.java
-│   │   │   │   └── ImageRepository.java
-│   │   │   ├── model/                           # Entities (like Room entities)
-│   │   │   │   ├── User.java
-│   │   │   │   ├── Location.java
-│   │   │   │   ├── Rating.java
-│   │   │   │   ├── Comment.java
-│   │   │   │   └── Image.java
+│   │   │   ├── repository/                      # Data access
+│   │   │   ├── model/                           # Entities
 │   │   │   ├── dto/                             # Data Transfer Objects
-│   │   │   │   ├── AuthRequestDTO.java
-│   │   │   │   ├── RegisterRequestDTO.java
-│   │   │   │   ├── LocationRequestDTO.java
-│   │   │   │   └── ...
 │   │   │   ├── security/                        # JWT & Security
-│   │   │   │   ├── JwtUtil.java
-│   │   │   │   ├── JwtAuthenticationFilter.java
-│   │   │   │   └── CustomUserDetailsService.java
 │   │   │   ├── event/                           # Kafka events
-│   │   │   │   ├── LocationEvent.java
-│   │   │   │   ├── RatingEvent.java
-│   │   │   │   └── CommentEvent.java
 │   │   │   └── exception/                       # Exception handling
-│   │   │       ├── GlobalExceptionHandler.java
-│   │   │       ├── ResourceNotFoundException.java
-│   │   │       └── BadRequestException.java
 │   │   └── resources/
-│   │       └── application.properties           # Configuration
-│   └── test/                                    # Unit & integration tests
-├── docker-compose.yml                           # Docker Compose config
-├── Dockerfile                                   # Docker image config
-├── pom.xml                                      # Maven dependencies
-├── README.md                                    # This file
-├── SPRING_GUIDE_FOR_KOTLIN_DEVELOPERS.md       # Comprehensive learning guide
-├── API_DOCUMENTATION.md                         # Complete API docs
-├── DEPLOYMENT_GUIDE.md                          # Deployment instructions
-└── ARCHITECTURE.md                              # Architecture diagrams
+│   │       └── application.properties
+│   └── test/
+├── frontend/                                    # Frontend (React)
+│   ├── public/
+│   ├── src/
+│   │   ├── components/                          # Reusable components
+│   │   │   ├── Comment/
+│   │   │   ├── Image/
+│   │   │   ├── Layout/
+│   │   │   ├── Location/
+│   │   │   └── Rating/
+│   │   ├── context/                             # React Context
+│   │   ├── hooks/                               # Custom hooks
+│   │   ├── pages/                               # Page components
+│   │   ├── services/                            # API services
+│   │   ├── utils/                               # Utilities
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   ├── package.json
+│   ├── vite.config.js
+│   └── README.md                                # Frontend documentation
+├── docker-compose.yml
+├── Dockerfile
+├── pom.xml
+└── README.md                                    # This file
 ```
+
+See detailed structure in [frontend/README.md](frontend/README.md)
 
 ## 🔌 API Endpoints
 
@@ -330,36 +353,21 @@ Import the API collection from Swagger: http://localhost:8080/v3/api-docs
 
 **Detailed architecture**: See [ARCHITECTURE.md](ARCHITECTURE.md)
 
-## 📚 Learning Resources
+## 📚 Documentation
 
-1. **[SPRING_GUIDE_FOR_KOTLIN_DEVELOPERS.md](SPRING_GUIDE_FOR_KOTLIN_DEVELOPERS.md)** - Complete Spring Framework guide with:
-   - Spring vs Android comparisons
-   - Dependency Injection explained
-   - Microservices architecture patterns
-   - Redis and Kafka integration
-   - Real-world examples (Airbnb, Booking.com)
-   - Deployment strategies
+### Frontend
+- **[frontend/README.md](frontend/README.md)** - Complete React frontend guide:
+  - Setup and installation
+  - Component structure
+  - API integration
+  - State management
+  - Styling approach
 
-2. **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)** - Complete API reference with:
-   - All endpoints documented
-   - Request/response examples
-   - Authentication flows
-   - Error handling
-   - Mobile integration tips
-
-3. **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Step-by-step deployment:
-   - Local development setup
-   - Docker deployment
-   - Production configuration
-   - Monitoring and logging
-   - Performance optimization
-
-4. **[ARCHITECTURE.md](ARCHITECTURE.md)** - Architecture deep-dive:
-   - System design diagrams
-   - Microservices patterns
-   - Database schema
-   - Caching strategy
-   - Event-driven architecture
+### Backend
+- **[SPRING_GUIDE_FOR_KOTLIN_DEVELOPERS.md](SPRING_GUIDE_FOR_KOTLIN_DEVELOPERS.md)** - Spring Framework guide
+- **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)** - Complete API reference
+- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Deployment instructions
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Architecture overview
 
 ## 🔐 Security
 
